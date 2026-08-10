@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.tasks import router as tasks_router
 from app.database import get_database_session
 
 app = FastAPI(
@@ -12,6 +13,8 @@ app = FastAPI(
     version="0.1.0",
 )
 DatabaseSession = Annotated[AsyncSession, Depends(get_database_session)]
+
+app.include_router(tasks_router)
 
 
 @app.get("/")
