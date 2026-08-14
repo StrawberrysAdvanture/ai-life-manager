@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     database_url: str = (
         "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_life_manager"
     )
+    test_database_url: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_life_manager_test"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"

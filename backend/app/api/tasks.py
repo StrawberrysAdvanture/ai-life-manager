@@ -1,12 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_database_session
 from app.models.task import Task
+from app.repositories.task import TaskRepository
 from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
+from app.services.task import TaskService
 
 router = APIRouter(
     prefix="/tasks",
@@ -28,19 +29,10 @@ async def create_task(
     task_data: TaskCreate,
     session: DatabaseSession,
 ) -> Task:
-    task = Task(
-        title=task_data.title,
-        description=task_data.description,
-        priority=task_data.priority,
-        status=task_data.status,
-        deadline=task_data.deadline,
-    )
+    repository = TaskRepository(session)
+    service = TaskService(repository)
 
-    session.add(task)
-    await session.commit()
-    await session.refresh(task)
-
-    return task
+    return await service.create_task(task_data)
 
 
 @router.get(
@@ -50,9 +42,10 @@ async def create_task(
 async def list_tasks(
     session: DatabaseSession,
 ) -> list[Task]:
-    result = await session.execute(select(Task).order_by(Task.created_at.desc()))
+    repository = TaskRepository(session)
+    service = TaskService(repository)
 
-    return list(result.scalars().all())
+    return await service.list_tasks()
 
 
 @router.get(
@@ -63,7 +56,10 @@ async def get_task(
     task_id: int,
     session: DatabaseSession,
 ) -> Task:
-    task = await session.get(Task, task_id)
+    repository = TaskRepository(session)
+    service = TaskService(repository)
+
+    task = await service.get_task(task_id)
 
     if task is None:
         raise HTTPException(
@@ -83,7 +79,10 @@ async def update_task(
     task_data: TaskUpdate,
     session: DatabaseSession,
 ) -> Task:
-    task = await session.get(Task, task_id)
+    repository = TaskRepository(session)
+    service = TaskService(repository)
+
+    task = await repository.get_by_id(task_id)
 
     if task is None:
         raise HTTPException(
@@ -91,15 +90,7 @@ async def update_task(
             detail="Task not found",
         )
 
-    update_data = task_data.model_dump(exclude_unset=True)
-
-    for field, value in update_data.items():
-        setattr(task, field, value)
-
-    await session.commit()
-    await session.refresh(task)
-
-    return task
+    return await service.update_task(task, task_data)
 
 
 @router.delete(
@@ -110,7 +101,10 @@ async def delete_task(
     task_id: int,
     session: DatabaseSession,
 ) -> None:
-    task = await session.get(Task, task_id)
+    repository = TaskRepository(session)
+    service = TaskService(repository)
+
+    task = await repository.get_by_id(task_id)
 
     if task is None:
         raise HTTPException(
@@ -118,5 +112,4 @@ async def delete_task(
             detail="Task not found",
         )
 
-    await session.delete(task)
-    await session.commit()
+    await service.delete_task(task)

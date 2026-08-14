@@ -1,25 +1,4 @@
-from collections.abc import AsyncIterator
-
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-
-from app.database import engine
-from app.main import app
-
-
-@pytest_asyncio.fixture
-async def client() -> AsyncIterator[AsyncClient]:
-    transport = ASGITransport(app=app)
-
-    async with AsyncClient(
-        transport=transport,
-        base_url="http://test",
-    ) as client:
-        yield client
-
-    # Prevent asyncpg connections from being reused
-    # by a different pytest event loop.
-    await engine.dispose()
+from httpx import AsyncClient
 
 
 async def test_create_task(client: AsyncClient) -> None:
