@@ -1,5 +1,9 @@
 from httpx import AsyncClient
 
+from app.api.dependencies import CurrentUser, get_current_user
+from app.main import app
+from app.policies.permissions import Permission
+
 
 async def test_create_task(client: AsyncClient) -> None:
     response = await client.post(
@@ -117,3 +121,30 @@ async def test_delete_task(client: AsyncClient) -> None:
     get_response = await client.get(f"/tasks/{task_id}")
 
     assert get_response.status_code == 404
+
+
+async def test_delete_task_without_permission(client: AsyncClient) -> None:
+    def override_get_current_user() -> CurrentUser:
+        return CurrentUser(
+            id=1,
+            email="local-user@ai-life-manager.invalid",
+            permissions=frozenset(
+                {
+                    Permission.READ_TASKS,
+                    Permission.CREATE_TASK,
+                    Permission.UPDATE_TASK,
+                }
+            ),
+        )
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    try:
+        response = await client.delete("/tasks/1")
+
+        assert response.status_code == 403
+        assert response.json() == {
+            "detail": "Permission denied",
+        }
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)

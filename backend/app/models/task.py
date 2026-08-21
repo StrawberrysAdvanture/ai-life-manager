@@ -1,10 +1,15 @@
 from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
 
 
 class TaskStatus(StrEnum):
@@ -55,4 +60,24 @@ class Task(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
+
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("projects.id"),
+        nullable=True,
+        index=True,
+    )
+
+    user: Mapped["User"] = relationship(
+        back_populates="tasks",
+    )
+
+    project: Mapped["Project | None"] = relationship(
+        back_populates="tasks",
     )

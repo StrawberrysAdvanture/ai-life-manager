@@ -1,10 +1,9 @@
-from typing import Annotated
+from fastapi import APIRouter, HTTPException, status
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import get_database_session
+from app.api.dependencies import CurrentUserDependency, DatabaseSession
 from app.models.task import Task
+from app.policies.access import require_permission
+from app.policies.permissions import Permission
 from app.repositories.task import TaskRepository
 from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
 from app.services.task import TaskService
@@ -13,11 +12,6 @@ router = APIRouter(
     prefix="/tasks",
     tags=["tasks"],
 )
-
-DatabaseSession = Annotated[
-    AsyncSession,
-    Depends(get_database_session),
-]
 
 
 @router.post(
@@ -28,11 +22,16 @@ DatabaseSession = Annotated[
 async def create_task(
     task_data: TaskCreate,
     session: DatabaseSession,
+    current_user: CurrentUserDependency,
 ) -> Task:
+    require_permission(current_user, Permission.CREATE_TASK)
     repository = TaskRepository(session)
     service = TaskService(repository)
 
-    return await service.create_task(task_data)
+    return await service.create_task(
+        task_data,
+        user_id=current_user.id,
+    )
 
 
 @router.get(
@@ -40,8 +39,10 @@ async def create_task(
     response_model=list[TaskRead],
 )
 async def list_tasks(
-    session: DatabaseSession,
+    session: DatabaseSession, current_user: CurrentUserDependency
 ) -> list[Task]:
+    require_permission(current_user, Permission.READ_TASKS)
+
     repository = TaskRepository(session)
     service = TaskService(repository)
 
@@ -55,7 +56,9 @@ async def list_tasks(
 async def get_task(
     task_id: int,
     session: DatabaseSession,
+    current_user: CurrentUserDependency,
 ) -> Task:
+    require_permission(current_user, Permission.READ_TASKS)
     repository = TaskRepository(session)
     service = TaskService(repository)
 
@@ -78,7 +81,9 @@ async def update_task(
     task_id: int,
     task_data: TaskUpdate,
     session: DatabaseSession,
+    current_user: CurrentUserDependency,
 ) -> Task:
+    require_permission(current_user, Permission.UPDATE_TASK)
     repository = TaskRepository(session)
     service = TaskService(repository)
 
@@ -100,7 +105,10 @@ async def update_task(
 async def delete_task(
     task_id: int,
     session: DatabaseSession,
+    current_user: CurrentUserDependency,
 ) -> None:
+    require_permission(current_user, Permission.DELETE_TASK)
+
     repository = TaskRepository(session)
     service = TaskService(repository)
 

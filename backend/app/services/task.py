@@ -7,13 +7,15 @@ class TaskService:
     def __init__(self, repository: TaskRepository) -> None:
         self.repository = repository
 
-    async def create_task(self, task_data: TaskCreate) -> Task:
+    async def create_task(self, task_data: TaskCreate, user_id: int) -> Task:
         task = Task(
             title=task_data.title,
             description=task_data.description,
             priority=task_data.priority,
             status=task_data.status,
             deadline=task_data.deadline,
+            user_id=user_id,
+            project_id=None,
         )
 
         return await self.repository.create(task)
