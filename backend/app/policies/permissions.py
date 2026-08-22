@@ -15,3 +15,10 @@ class Permission(StrEnum):
     # Person
     READ_PEOPLE = "read_people"
     CREATE_PERSON = "create_person"
+
+    # Commitment
+    READ_COMMITMENTS = "read_commitments"
+    CREATE_COMMITMENT = "create_commitment"
+
+    # Agent Action... only read permited here anyway
+    READ_AGENT_ACTIONS = "read_agent_actions"

@@ -4,6 +4,8 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.agent_actions import router as agent_actions_router
+from app.api.commitments import router as commitments_router
 from app.api.people import router as people_router
 from app.api.projects import router as projects_router
 from app.api.tasks import router as tasks_router
@@ -16,6 +18,8 @@ app = FastAPI(
 )
 DatabaseSession = Annotated[AsyncSession, Depends(get_database_session)]
 
+app.include_router(agent_actions_router)
+app.include_router(commitments_router)
 app.include_router(people_router)
 app.include_router(projects_router)
 app.include_router(tasks_router)

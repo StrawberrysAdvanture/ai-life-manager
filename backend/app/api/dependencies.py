@@ -27,6 +27,10 @@ def get_current_user() -> CurrentUser:
                 Permission.DELETE_TASK,
                 Permission.READ_PROJECTS,
                 Permission.CREATE_PROJECT,
+                Permission.READ_PEOPLE,
+                Permission.CREATE_PERSON,
+                Permission.READ_COMMITMENTS,
+                Permission.CREATE_COMMITMENT,
             }
         ),
     )

@@ -23,3 +23,13 @@ class PersonRepository:
         )
 
         return list(result.scalars().all())
+
+    async def get_by_id_for_user(self, person_id: int, user_id: int) -> Person | None:
+        result = await self.session.execute(
+            select(Person).where(
+                Person.id == person_id,
+                Person.user_id == user_id,
+            )
+        )
+
+        return result.scalar_one_or_none()
