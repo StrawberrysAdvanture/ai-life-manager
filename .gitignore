@@ -1,3 +1,6 @@
+# Google OAuth
+.secrets/
+
 # Python
 __pycache__/
 *.py[cod]
